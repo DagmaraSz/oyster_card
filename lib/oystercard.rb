@@ -22,6 +22,7 @@ class Oystercard
 	end
 
 	def touch_out(station_name)
+		raise 'Not currently in a journey' unless in_journey?
 		deduct(MINIMUM_FARE)
 		@exit_station = station_name
 		@journey_history[@entry_station] = @exit_station
