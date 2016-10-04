@@ -1,6 +1,7 @@
 class Oystercard
 
 	MAXIMUM_LIMIT = 90
+	MINIMUM_AMOUNT = 1
 
 	attr_reader :balance
 	attr_accessor :in_journey
@@ -20,6 +21,7 @@ class Oystercard
 	end
 
 	def touch_in
+		raise 'Please top up more than £1!' if @balance < MINIMUM_AMOUNT
 		@in_journey = true
 	end
 
