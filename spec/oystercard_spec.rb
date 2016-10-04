@@ -3,6 +3,7 @@ require 'oystercard'
 describe Oystercard do
 
 	subject(:oystercard) { described_class.new }
+	let(:entry_station) { double(:entry_station) }
 
 	it 'initializes with a balance of 0' do
 		expect(oystercard.balance).to eq(0)
@@ -38,7 +39,7 @@ describe Oystercard do
 		before(:each) do
 			@minimum_fare = Oystercard::MINIMUM_FARE
 			oystercard.top_up(5)
-			oystercard.touch_in
+			oystercard.touch_in(entry_station)
 		end
 
 		it 'has a minimum balance limit of £1' do
@@ -56,12 +57,22 @@ describe Oystercard do
 
 		it 'would raise an error if balance is less than minimum amount' do
 			oystercard2 = Oystercard.new
-			expect { oystercard2.touch_in }.to raise_error 'Please top up more than £1!'
+			expect { oystercard2.touch_in(entry_station) }.to raise_error 'Please top up more than £1!'
 		end
 
 		it 'deduct minimum fare £1' do
 			expect {oystercard.touch_out}.to change{oystercard.balance}.by(-@minimum_fare)
 		end
+
+		it 'saves entry station' do
+			expect(oystercard.entry_station).to eq(entry_station)
+		end
+
+		it "removes entry station" do
+			oystercard.touch_out
+			expect(oystercard.entry_station).to be_nil
+		end
+
 	end
 
 end
