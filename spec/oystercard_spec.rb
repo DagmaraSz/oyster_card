@@ -6,9 +6,10 @@ describe Oystercard do
 	subject(:oystercard2) { described_class.new }
 	let(:entry_station)  { double(:station) }
 	let(:exit_station)   { double(:station)}
+	let(:journey)				 {double(:journey)}
 
 	before (:each) do
-		@minimum_fare = Oystercard::MINIMUM_FARE
+		@minimum_amount = Oystercard::MINIMUM_AMOUNT
 	end
 
 	it 'initializes with a balance of 0' do
@@ -49,63 +50,62 @@ describe Oystercard do
 		context '#touch_in' do
 
 			it 'has a minimum balance limit of £1' do
-				expect(@minimum_fare).to eq(1)
+				expect(@minimum_amount).to eq(1)
 			end
 
 			it "would start the journey" do
-				expect(oystercard).to be_in_journey
+				expect(oystercard.journey).to_not be nil
 			end
 
 			it 'would raise an error if balance is less than minimum amount' do
 				expect { oystercard2.touch_in(entry_station) }.to raise_error 'Please top up more than £1!'
 			end
 
-			it 'saves entry station' do
-				expect(oystercard.entry_station).to eq(entry_station)
-			end
-
 		end
+
+
 
 		context '#touch_out' do
 
 			it 'would end the journey' do
+				expect(oystercard.journey).to receive(:finish)
 				oystercard.touch_out(exit_station)
-				expect(oystercard).to_not be_in_journey
 			end
 
-			it 'deducts a minimum fare £1' do
-				expect {oystercard.touch_out(exit_station)}.to change{oystercard.balance}.by(-@minimum_fare)
-			end
-
-			it "saves exit station" do
-				oystercard.touch_out(exit_station)
-				expect(oystercard.exit_station).to be exit_station
-			end
-
-			it "touch out will clear the entry station" do
-				oystercard.touch_out(exit_station)
-				expect(oystercard.entry_station).to be_nil
-			end
-
-			it 'should raise an error if not in journey' do
-				expect { oystercard2.touch_out(exit_station) }.to raise_error 'Not currently in a journey'
+			it 'deducts the journey fare' do
+				allow(journey).to receive(:calculate_fare).and_return(1)
+				expect {oystercard.touch_out(exit_station)}.to change{oystercard.balance}.by(-1)
 			end
 
 		end
 
 	end
 
+
+	it 'creates a new journey with nil entry station if journey does not exist' do
+		oystercard.touch_out(entry_station)
+		expect(oystercard.journey.entry_station).to be nil		
+	end
+
 	context '#journey_history' do
 
-		it 'should return a journey history' do
+		it 'is able to find the last entry station' do
 			oystercard.top_up(5)
 			oystercard.touch_in(entry_station)
 			oystercard.touch_out(exit_station)
-			expect(oystercard.journey_history).to include(entry_station => exit_station)
+			expect(oystercard.journey_history[0].entry_station).to be(entry_station)
 		end
 
-		it 'should have empty journey history by default',focus: :true do
-			expect(oystercard.journey_history).to eq({})
+		it 'is able to find the last exit station' do
+			oystercard.top_up(5)
+			oystercard.touch_in(entry_station)
+			oystercard.touch_out(exit_station)
+			expect(oystercard.journey_history[0].exit_station).to be(exit_station)
+		end
+
+
+		it 'has an empty journey history by default' do
+			expect(oystercard.journey_history).to eq([])
 		end
 
 	end
